@@ -13,7 +13,7 @@ import (
 	"resty.dev/v3"
 )
 
-var scrapper = resty.New().SetTimeout(10 * time.Second)
+var scrapper = resty.New().SetTimeout(5 * time.Second)
 
 // silly terminal colors
 var Reset = "\033[0m"
@@ -26,52 +26,54 @@ var Cyan = "\033[36m"
 var Gray = "\033[37m"
 var White = "\033[97m"
 
-func checkID(id string) bool {
+func checkID(id string) int {
 	url := "https://www.snapchat.com/add/" + id
 	// here im adding some checks to reduce false positives, code is a bit effy and could probably be combined into a single expression but fuck it
 
 	if len(id) < 3 || len(id) > 15 {
-		return false
+		return 0
 	}
 
 	// must start with a letter
 	if !regexp.MustCompile(`^[a-zA-Z]`).MatchString(id) {
-		return false
+		return 0
 	}
 
 	// can only have letters, numbers, underscore, dots and -
 	if !regexp.MustCompile(`^[a-zA-Z0-9._-]+$`).MatchString(id) {
-		return false
+		return 0
 	}
 
 	// max of 1 special character
 	if strings.Count(id, "-") > 1 || strings.Count(id, "_") > 1 || strings.Count(id, ".") > 1 {
-		return false
+		return 0
 	}
 
 	// make sure that the special chars arent at the end
 	if strings.HasSuffix(id, "-") || strings.HasSuffix(id, "_") || strings.HasSuffix(id, ".") {
-		return false
+		return 0
 	}
 
 	// obviously spaces arent allowed
 	if strings.Contains(id, " ") {
-		return false
+		return 0
 	}
 
 	resp, err := scrapper.R().Get(url)
 	if err != nil {
 		fmt.Println(Red+"Request error:"+Reset, err)
-		return false
+		fmt.Printf(Yellow+"RATELIMITED: Retrying %s in 10 seconds.. \n"+Reset, id)
+
+		return 2
 	}
 
 	switch resp.StatusCode() {
 	case 404:
-		return true
+		return 1
 	case 200:
-		return false
+		return 0
 	default:
-		return false
+		return 0
 	}
 }
 
@@ -284,16 +286,18 @@ func main() {
 
 	for i := progress; i < len(ids); i++ {
 		id := ids[i]
-		if !checkID(id) {
+
+		switch checkID(id) {
+		case 0:
+			fmt.Printf(Red+"Not available: %s\n"+Reset, id)
+		case 1:
 			fmt.Printf(Green+"Available: %s\n"+Reset, id)
 			file.WriteString(id + "\n")
-		} else {
-			fmt.Printf(Red+"Not available: %s\n"+Reset, id)
+		case 2:
+			time.Sleep(10 * time.Second)
+			i--
 		}
 
-		if err := updateProgress(targetsPath, i+1, ids); err != nil {
-			fmt.Println(Red+"Failed to update progress:"+Reset, err)
-		}
 	}
 
 	fmt.Println(Green + "\nCheck completed. Available users saved to " + outputPath + Reset)

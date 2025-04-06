@@ -13,7 +13,27 @@ import (
 	"resty.dev/v3"
 )
 
-var scrapper = resty.New().SetTimeout(5 * time.Second)
+var scrapper = resty.New().SetTimeout(3 * time.Second) // a timeout of 3 seconds with a ratelimit retry of 2 seconds is the best way to run this proxyless from my testing.
+// the ratelimit and timeout should probably be something that the user can change instead of it being hardcoded, but for now this works fine.
+
+// the init function will automatically set some "human" looking headers to our request, this makes it look less automated and reduces ratelimits by a LOT.
+// only mess with this if you know what you are doing
+
+func init() {
+	scrapper.SetHeaders(map[string]string{
+		"User-Agent":                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.212 Safari/537.36",
+		"Accept":                    "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8",
+		"Accept-Encoding":           "gzip, deflate, br",
+		"Accept-Language":           "en-US,en;q=0.9",
+		"Connection":                "keep-alive",
+		"Upgrade-Insecure-Requests": "1",
+		"Sec-Fetch-Site":            "same-origin",
+		"Sec-Fetch-Mode":            "navigate",
+		"Sec-Fetch-Dest":            "document",
+		"Referer":                   "https://www.snapchat.com/",
+		"Cache-Control":             "max-age=0",
+	})
+}
 
 // silly terminal colors
 var Reset = "\033[0m"
@@ -60,6 +80,7 @@ func checkID(id string) int {
 	}
 
 	resp, err := scrapper.R().Get(url)
+
 	if err != nil {
 		fmt.Println(Red+"Request error:"+Reset, err)
 		fmt.Printf(Yellow+"RATELIMITED: Retrying %s in 10 seconds.. \n"+Reset, id)
@@ -155,29 +176,30 @@ func showSplash() {
 	fmt.Println(Blue + `
 ------------------------------------------------------------------------------------------------------------------------
 
- ███████████   ███              █████                                █████   
-░░███░░░░░███ ░░░              ░░███                                ░░███    
- ░███    ░███ ████  ████████   ███████   ████████   ██████   █████  ███████  
- ░██████████ ░░███ ░░███░░███ ░░░███░   ░░███░░███ ███░░███ ███░░  ░░░███░   
- ░███░░░░░░   ░███  ░███ ░███   ░███     ░███ ░░░ ░███████ ░░█████   ░███    
- ░███         ░███  ░███ ░███   ░███ ███ ░███     ░███░░░   ░░░░███  ░███ ███
- █████        █████ ████ █████  ░░█████  █████    ░░██████  ██████   ░░█████ 
-░░░░░        ░░░░░ ░░░░ ░░░░░    ░░░░░  ░░░░░      ░░░░░░  ░░░░░░     ░░░░░  
-                                                                             
-                                                                     
-   █████████  █████                        █████                             
-  ███░░░░░███░░███                        ░░███                              
- ███     ░░░  ░███████    ██████   ██████  ░███ █████  ██████  ████████      
-░███          ░███░░███  ███░░███ ███░░███ ░███░░███  ███░░███░░███░░███     
-░███          ░███ ░███ ░███████ ░███ ░░░  ░██████░  ░███████  ░███ ░░░      
-░░███     ███ ░███ ░███ ░███░░░  ░███  ███ ░███░░███ ░███░░░   ░███          
- ░░█████████  ████ █████░░██████ ░░██████  ████ █████░░██████  █████         
-  ░░░░░░░░░  ░░░░ ░░░░░  ░░░░░░   ░░░░░░  ░░░░ ░░░░░  ░░░░░░  ░░░░░          
+  █████████                                          █████                 █████   
+ ███░░░░░███                                        ░░███                 ░░███    
+░███    ░░░  ████████    ██████   ████████   ██████  ░███████    ██████   ███████  
+░░█████████ ░░███░░███  ░░░░░███ ░░███░░███ ███░░███ ░███░░███  ░░░░░███ ░░░███░   
+ ░░░░░░░░███ ░███ ░███   ███████  ░███ ░███░███ ░░░  ░███ ░███   ███████   ░███    
+ ███    ░███ ░███ ░███  ███░░███  ░███ ░███░███  ███ ░███ ░███  ███░░███   ░███ ███
+░░█████████  ████ █████░░████████ ░███████ ░░██████  ████ █████░░████████  ░░█████ 
+ ░░░░░░░░░  ░░░░ ░░░░░  ░░░░░░░░  ░███░░░   ░░░░░░  ░░░░ ░░░░░  ░░░░░░░░    ░░░░░   
+                                  ░███                                   
+                                  █████                                  
+                                 ░░░░░                                                                                           
+   █████████  █████                        █████                         
+  ███░░░░░███░░███                        ░░███                          
+ ███     ░░░  ░███████    ██████   ██████  ░███ █████  ██████  ████████  
+░███          ░███░░███  ███░░███ ███░░███ ░███░░███  ███░░███░░███░░███ 
+░███          ░███ ░███ ░███████ ░███ ░░░  ░██████░  ░███████  ░███ ░░░  
+░░███     ███ ░███ ░███ ░███░░░  ░███  ███ ░███░░███ ░███░░░   ░███      
+ ░░█████████  ████ █████░░██████ ░░██████  ████ █████░░██████  █████     
+  ░░░░░░░░░  ░░░░ ░░░░░  ░░░░░░   ░░░░░░  ░░░░ ░░░░░  ░░░░░░  ░░░░░           
                                                                                                                         
 ------------------------------------------------------------------------------------------------------------------------` + Cyan + `
-PINTREST USERNAME AVAILABILITY CHECKER — by ytax - https://oguser.com/clarke
+SNAPCHAT USERNAME AVAILABILITY CHECKER — by ytax - https://oguser.com/clarke
 
-Send suggestions or report bugs at:` + Blue + ` https://github.com/ytax/pintrest-username-checker` + Cyan + `
+Send suggestions or report bugs at:` + Blue + ` https://github.com/ytax/snapchat-username-checker` + Cyan + `
 
 This software will check for usernames inside "` + Blue + `targets.txt` + Cyan + `" feel free to replace the content of this file with a list of users
 you want to check!
@@ -282,7 +304,7 @@ func main() {
 	}
 	defer file.Close()
 
-	fmt.Println(Cyan + "\nChecking pintrest usernames...\n" + Reset)
+	fmt.Println(Cyan + "\nChecking snapchat usernames...\n" + Reset)
 
 	for i := progress; i < len(ids); i++ {
 		id := ids[i]
@@ -294,8 +316,12 @@ func main() {
 			fmt.Printf(Green+"Available: %s\n"+Reset, id)
 			file.WriteString(id + "\n")
 		case 2:
-			time.Sleep(10 * time.Second)
+			time.Sleep(2 * time.Second)
 			i--
+		}
+
+		if err := updateProgress(targetsPath, i+1, ids); err != nil {
+			fmt.Println(Red+"Failed to update progress:"+Reset, err)
 		}
 
 	}

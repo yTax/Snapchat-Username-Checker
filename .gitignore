@@ -55,6 +55,10 @@ release/
 releases/*
 releases/
 
+# useless shi
+proxies.txt
+
+
 # Go workspace file
 go.work
 

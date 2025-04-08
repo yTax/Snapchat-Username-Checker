@@ -2,7 +2,10 @@ package main
 
 import (
 	"bufio"
+	"bytes"
 	"fmt"
+	"io"
+	"net/http"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -10,92 +13,122 @@ import (
 	"strings"
 	"time"
 
-	"resty.dev/v3"
+	"github.com/sqweek/dialog"
+	"github.com/ytax/snapchat-username-checker/modules/requestparser"
+	"google.golang.org/protobuf/proto"
 )
 
-var scrapper = resty.New().SetTimeout(3 * time.Second) // a timeout of 3 seconds with a ratelimit retry of 2 seconds is the best way to run this proxyless from my testing.
-// the ratelimit and timeout should probably be something that the user can change instead of it being hardcoded, but for now this works fine.
+func spoofRequest(username string) ([]string, uint32, error) {
+	req := &requestparser.SuggestUsernameRequest{
+		Username: &requestparser.SuggestUsernameRequest_NameWrapper{
+			Name: username,
+		},
+		Locale:        "",
+		SomethingFlag: 0,
+		DeviceId:      "c798e85f-4511-66b0-889a-ef303fa6bfab",
+		SessionId:     "6687bd20-731d-387c-e3b9-d47c5a90f410",
+	}
 
-// the init function will automatically set some "human" looking headers to our request, this makes it look less automated and reduces ratelimits by a LOT.
-// only mess with this if you know what you are doing
+	body, err := proto.Marshal(req)
+	if err != nil {
+		return nil, 0, fmt.Errorf("error marshalling request: %v", err)
+	}
 
-func init() {
-	scrapper.SetHeaders(map[string]string{
-		"User-Agent":                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.212 Safari/537.36",
-		"Accept":                    "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8",
-		"Accept-Encoding":           "gzip, deflate, br",
-		"Accept-Language":           "en-US,en;q=0.9",
-		"Connection":                "keep-alive",
-		"Upgrade-Insecure-Requests": "1",
-		"Sec-Fetch-Site":            "same-origin",
-		"Sec-Fetch-Mode":            "navigate",
-		"Sec-Fetch-Dest":            "document",
-		"Referer":                   "https://www.snapchat.com/",
-		"Cache-Control":             "max-age=0",
-	})
+	payload := append([]byte{0}, uint32ToBytes(uint32(len(body)))...)
+	payload = append(payload, body...)
+
+	headers := map[string]string{
+		"Content-Type":            "application/grpc",
+		"TE":                      "trailers",
+		"Grpc-Accept-Encoding":    "identity, deflate, gzip",
+		"Grpc-Timeout":            "3S",
+		"User-Agent":              "Snapchat/13.21.0.43 (moto g play (2021); Android 11#e00ca2#30; gzip) V/MUSHROOM grpc-c++/1.48.0 grpc-c/26.0.0 (android; cronet_http)",
+		"Allow-Recycled-Username": "true",
+		"X-Request-Id":            "63adac91-301f-46d3-a576-44c28d302153",
+	}
+
+	url := "https://aws.api.snapchat.com/snapchat.activation.api.SuggestUsernameService/SuggestUsername"
+	reqHttp, err := http.NewRequest("POST", url, bytes.NewReader(payload))
+	if err != nil {
+		return nil, 0, fmt.Errorf("error creating HTTP request: %v", err)
+	}
+
+	for key, value := range headers {
+		reqHttp.Header.Set(key, value)
+	}
+
+	client := &http.Client{Timeout: 3 * time.Second}
+	resp, err := client.Do(reqHttp)
+	if err != nil {
+		return nil, 0, fmt.Errorf("error sending request: %v", err)
+	}
+	defer resp.Body.Close()
+
+	bodyResp, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, 0, fmt.Errorf("error reading response body: %v", err)
+	}
+
+	if len(bodyResp) <= 5 {
+		return nil, 0, fmt.Errorf("response body too short")
+	}
+	bodyResp = bodyResp[5:]
+
+	var response requestparser.SuggestUsernameResponse
+	err = proto.Unmarshal(bodyResp, &response)
+	if err != nil {
+		return nil, 0, fmt.Errorf("error unmarshalling response: %v", err)
+	}
+
+	return response.GetSuggestions(), response.GetSuccessCode(), nil
 }
 
-// silly terminal colors
+func uint32ToBytes(n uint32) []byte {
+	return []byte{
+		byte(n >> 24),
+		byte(n >> 16),
+		byte(n >> 8),
+		byte(n),
+	}
+}
+
 var Reset = "\033[0m"
 var Red = "\033[31m"
 var Green = "\033[32m"
 var Yellow = "\033[33m"
 var Blue = "\033[34m"
-var Magenta = "\033[35m"
 var Cyan = "\033[36m"
-var Gray = "\033[37m"
-var White = "\033[97m"
 
 func checkID(id string) int {
-	url := "https://www.snapchat.com/add/" + id
-	// here im adding some checks to reduce false positives, code is a bit effy and could probably be combined into a single expression but fuck it
-
 	if len(id) < 3 || len(id) > 15 {
 		return 0
 	}
-
-	// must start with a letter
 	if !regexp.MustCompile(`^[a-zA-Z]`).MatchString(id) {
 		return 0
 	}
-
-	// can only have letters, numbers, underscore, dots and -
 	if !regexp.MustCompile(`^[a-zA-Z0-9._-]+$`).MatchString(id) {
 		return 0
 	}
-
-	// max of 1 special character
 	if strings.Count(id, "-") > 1 || strings.Count(id, "_") > 1 || strings.Count(id, ".") > 1 {
 		return 0
 	}
-
-	// make sure that the special chars arent at the end
 	if strings.HasSuffix(id, "-") || strings.HasSuffix(id, "_") || strings.HasSuffix(id, ".") {
 		return 0
 	}
-
-	// obviously spaces arent allowed
 	if strings.Contains(id, " ") {
 		return 0
 	}
 
-	resp, err := scrapper.R().Get(url)
-
+	suggestions, successCode, err := spoofRequest(id)
 	if err != nil {
-		fmt.Println(Red+"Request error:"+Reset, err)
-		fmt.Printf(Yellow+"RATELIMITED: Retrying %s in 10 seconds.. \n"+Reset, id)
-
+		fmt.Println(Red+"[ "+Reset+strconv.Itoa(int(successCode))+Red+" ] "+Reset+"- "+Red+"Request error:"+Reset, err)
+		fmt.Printf(Yellow+"RATELIMITED: Retrying %s in 10 seconds...\n"+Reset, id)
 		return 2
 	}
-
-	switch resp.StatusCode() {
-	case 404:
+	if suggestions[0] == id {
 		return 1
-	case 200:
-		return 0
-	default:
-		return 0
 	}
+	return 0
 }
 
 func pauseTerminal() {
@@ -212,7 +245,6 @@ the usernames in alphabetic order` + Blue + `
 }
 
 func main() {
-
 	showSplash()
 
 	sessions, latestSession := getAllSessions()
@@ -242,11 +274,46 @@ func main() {
 
 	switch choice {
 	case "1":
+
 		newSessionName := "SESSION_" + strconv.Itoa(len(sessions)+1)
 		sessionPath = getSessionPath(newSessionName)
 		targetsPath = filepath.Join(sessionPath, "targets.txt")
 		outputPath = filepath.Join(sessionPath, "output.txt")
 		isNewSession = true
+	
+		
+	
+		// uses dialogue's fancy ass file picker instead of just reading from targets.txt
+		fmt.Println(Cyan + "-> Choose your targets .txt file..." + Reset)
+		time.Sleep(1 * time.Second) // lil delay so the user understands whats happening
+		targetFile, err := dialog.File().Filter("Text Files", "txt").Title("Select the target .txt file for checking").Load()
+		if err != nil {
+			fmt.Println(Red+"Error selecting file:"+Reset, err)
+			pauseTerminal()
+			return
+		}
+	
+
+		// create a new session folder
+		if err := os.MkdirAll(sessionPath, os.ModePerm); err != nil {
+			fmt.Println(Red+"Error creating session directory:"+Reset, err)
+			pauseTerminal()
+			return
+		}
+
+		// copy this to the respective session so we can resume later
+		input, err := os.ReadFile(targetFile)
+		if err != nil {
+			fmt.Println(Red+"Error reading selected file:"+Reset, err)
+			pauseTerminal()
+			return
+		}
+		if err := os.WriteFile(targetsPath, input, 0644); err != nil {
+			fmt.Println(Red+"Error copying selected file to session:"+Reset, err)
+			pauseTerminal()
+			return
+		}
+	
 	case "2":
 		fmt.Print(Cyan + "-> Enter the session name (e.g. SESSION_1): " + Reset)
 		var chosenSession string
@@ -265,19 +332,19 @@ func main() {
 
 	if isNewSession {
 		if err := os.MkdirAll(sessionPath, os.ModePerm); err != nil {
-			fmt.Println(Red+"Error creating session directory (this is really weird, make sure controlled folder access isnt blocking the program or that you arent running from a place where the program doesnt have permission to write.):"+Reset, err)
+			fmt.Println(Red+"Error creating session directory:"+Reset, err)
 			pauseTerminal()
 			return
 		}
 
 		input, err := os.ReadFile("targets.txt")
 		if err != nil {
-			fmt.Println(Red+"Error reading targets.txt (this is really weird, make sure controlled folder access isnt blocking the program or that you arent running from a place where the program doesnt have permission to write.):"+Reset, err)
+			fmt.Println(Red+"Error reading targets.txt:"+Reset, err)
 			pauseTerminal()
 			return
 		}
 		if err := os.WriteFile(targetsPath, input, 0644); err != nil {
-			fmt.Println(Red+"Error copying targets.txt (this is really weird, make sure controlled folder access isnt blocking the program or that you arent running from a place where the program doesnt have permission to write.):"+Reset, err)
+			fmt.Println(Red+"Error copying targets.txt:"+Reset, err)
 			pauseTerminal()
 			return
 		}
@@ -285,7 +352,7 @@ func main() {
 
 	ids, progress, err := readTargets(targetsPath)
 	if err != nil {
-		fmt.Println(Red+"Error reading targets file (this is really weird, make sure controlled folder access isnt blocking the program or that you arent running from a place where the program doesnt have permission to write.):"+Reset, err)
+		fmt.Println(Red+"Error reading targets file:"+Reset, err)
 		pauseTerminal()
 		return
 	}
@@ -298,7 +365,7 @@ func main() {
 
 	file, err := os.OpenFile(outputPath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
-		fmt.Println(Red+"Error creating/opening output file (this is really weird, make sure controlled folder access isnt blocking the program or that you arent running from a place where the program doesnt have permission to write.):"+Reset, err)
+		fmt.Println(Red+"Error creating/opening output file:"+Reset, err)
 		pauseTerminal()
 		return
 	}
@@ -306,24 +373,35 @@ func main() {
 
 	fmt.Println(Cyan + "\nChecking snapchat usernames...\n" + Reset)
 
+	var checkTimestamps []time.Time
+
 	for i := progress; i < len(ids); i++ {
 		id := ids[i]
+		now := time.Now()
+		checkTimestamps = append(checkTimestamps, now)
+
+		// Clean up old timestamps older than 60 seconds
+		validTime := now.Add(-1 * time.Minute)
+		for len(checkTimestamps) > 0 && checkTimestamps[0].Before(validTime) {
+			checkTimestamps = checkTimestamps[1:]
+		}
+
+		cpm := len(checkTimestamps)
 
 		switch checkID(id) {
 		case 0:
-			fmt.Printf(Red+"Not available: %s\n"+Reset, id)
+			fmt.Printf(Red+"Not available: %s"+Reset+" | CPM: %d\n", id, cpm)
 		case 1:
-			fmt.Printf(Green+"Available: %s\n"+Reset, id)
+			fmt.Printf(Green+"Available: %s"+Reset+" | CPM: %d\n", id, cpm)
 			file.WriteString(id + "\n")
 		case 2:
-			time.Sleep(2 * time.Second)
+			time.Sleep(10 * time.Second)
 			i--
 		}
 
 		if err := updateProgress(targetsPath, i+1, ids); err != nil {
 			fmt.Println(Red+"Failed to update progress:"+Reset, err)
 		}
-
 	}
 
 	fmt.Println(Green + "\nCheck completed. Available users saved to " + outputPath + Reset)

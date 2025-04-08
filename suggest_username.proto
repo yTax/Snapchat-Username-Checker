@@ -1,0 +1,22 @@
+syntax = "proto3";
+
+package requestparser;
+option go_package = "modules/requestparser";
+
+message SuggestUsernameRequest {
+  message NameWrapper {
+    string name = 1;  // Nested message for the username
+  }
+
+  NameWrapper username = 1;   // Field 1: username
+  string locale = 2;          // Field 2: locale (empty string)
+  uint32 something_flag = 3;  // Field 3: something flag (0 is off)
+  string device_id = 4;       // Field 4: device ID (UUID)
+  string session_id = 5;      // Field 5: session ID (UUID)
+}
+
+
+message SuggestUsernameResponse {
+  repeated string suggestions = 1;  // Field 1: repeated usernames
+  uint32 success_code = 2;          // Field 2: success code (uint32)
+}

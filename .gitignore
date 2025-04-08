@@ -25,10 +25,22 @@
 # Session folder
 .sessions/*
 .sessions/
+sessions/
+sessions/*
+
+
+# shhhhhhhhhhhh
+.V2/
+.V2/*
+V2/
+V2/*
 
 # test env file
 .env/
 .env/*
+env/
+env/*
+
 
 # auth key files
 *.auth
@@ -38,6 +50,10 @@
 .release/
 .releases/*
 .releases/
+release/*
+release/
+releases/*
+releases/
 
 # Go workspace file
 go.work

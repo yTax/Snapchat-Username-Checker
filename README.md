@@ -130,7 +130,7 @@ Just raw, direct gRPC requests to Snapchat’s infrastructure — resulting in *
 ## ⚠️ Warnings
 
 - **Your proxies MUST be SOCKS5**, in `IP:PORT` format. No `socks5://` prefix. This is due to SOCKS5 being the only proxies that can communicate in HTTP2 with gRPC.
-- **Slow proxies is a TERRIBLE bad idea.** Proxyless is faster than proxied with slow proxies, some free proxies like the ones from [proxifly's github](https://github.com/proxifly/free-proxy-list) **may** work.
+- **Slow proxies is a TERRIBLE bad idea.** Proxyless is faster than proxied with slow proxies, some free proxies like the ones from [proxifly's github](https://github.com/proxifly/free-proxy-list) **may** work but i'd recommend you use the free trial proxies from [Webshare](https://www.webshare.io/) if you want to run this for free, they're fast enough to not cause any problems or major slow-downs.
 - **Rate-limits are automatically handled** by switching to proxies for a short cooldown.
 - **Yes, the code is messy.** It's functional, but a rewrite is planned for V2.
 
@@ -158,6 +158,9 @@ A: No. Only SOCKS5. HTTP proxies won't work with HTTP/2 & gRPC.
 
 **Q: It’s not checking properly, what’s wrong?**  
 A: Check your proxies. Or just run proxyless. Most issues come from slow/dead proxies.
+
+**Q: Can i use free proxies?**  
+A: They most likely wont work because of how slow they are and possibly not handling encrypted connections. If you want to run this tool for free sign up for the [Webshare](https://www.webshare.io/) free trial and claim the 10 free proxies they give you. The proxies arent incredible, but they're fast enough to not cause problems or slow-down the tool.
 
 **Q: I'm using proxies, but it looks like some checks are still proxyless. Why?**
 A: This is intentional. Proxyless requests are significantly faster because they avoid the overhead of routing through a proxy.

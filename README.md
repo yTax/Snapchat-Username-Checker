@@ -2,6 +2,7 @@
 
 A terminal-based Snapchat username availability checker with SOCKS5 proxy support, session saving, a proxyless mode and real-time CPM tracking. 
 It leverages Snapchat's private gRPC API (acquired from the mobile app) to deliver fast, accurate results — **proxyless or proxied**.
+
 It's a bit ugly but incredibly fast and efficient — V2 rewrite coming soon™.
 
 > Written in Go. Reverse engineered straight from the Snapchat mobile app.

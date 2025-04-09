@@ -260,3 +260,5 @@ Use responsibly.
 ---
 
 ## 🖼️ Screenshots
+
+![image](https://github.com/user-attachments/assets/c14bd816-e059-425b-9f8e-a25f054e1776)

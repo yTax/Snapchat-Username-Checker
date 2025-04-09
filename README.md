@@ -196,7 +196,7 @@ Open an issue on [GitHub](https://github.com/ytax/snapchat-username-checker/issu
 - Concurrency isn't implemented yet.
 - The proxy validator is **abysmally** slow, concurrency needs to be implemented here asap.
 - The program sometimes will enter an infinite loop or really long loop if all of your proxies suddenly die.
-- The checking speed drops by quite a bit and the ratelimits increase after a large amount of request that return taken usernames. A possible fix for this would be to send a request for an avaliable username in order to prevent the API from ratelimitting the user.
+- The checking speed drops by quite a bit and the ratelimits increase after a large amount of requests that return taken usernames. A possible fix for this would be to send a request for an avaliable username in order to prevent the API from ratelimitting the user.
 
 ---
 

@@ -224,7 +224,7 @@ Open an issue on [GitHub](https://github.com/ytax/snapchat-username-checker/issu
 - Some SOCKS5 proxies may not support HTTP/2 and will be skipped.
 - Running large lists with poor proxies may significantly slow down checks.
 - Concurrency isn't implemented yet.
-- The proxy validator is abysmally, concurrency needs to be implemented here asap.
+- The proxy validator is **abysmally** slow, concurrency needs to be implemented here asap.
 - The program sometimes will enter an infinite loop or really long loop if all of your proxies suddenly die. 
 
 ---

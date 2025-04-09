@@ -43,8 +43,8 @@ It's a bit ugly but incredibly fast and efficient — V2 rewrite coming soon™.
 
 ## ⚙️ Features
 
-- 🔍 Fastest Snapchat checker you'll find (gRPC based)
-- ⚡ Average of **260 checks per minute**
+- 🔍 **Fastest** Snapchat checker you'll find (gRPC based)
+- ⚡ Average of **260 checks per minute** — tested over a continuous 4-hour run
 - 🔌 Proxyless execution support
 - 🧠 Built-in username filtering for invalid formats
 - 🌐 SOCKS5 Proxy support (recommended for ratelimit bypass)

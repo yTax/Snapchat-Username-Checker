@@ -160,7 +160,7 @@ Just raw, direct gRPC requests to Snapchat’s infrastructure — resulting in *
 ## ⚠️ Warnings
 
 - **Your proxies MUST be SOCKS5**, in `IP:PORT` format. No `socks5://` prefix. This is due to SOCKS5 being the only proxies that can communicate in HTTP2 with gRPC.
-- **Slow proxies is a TERRIBLE bad idea.** Proxyless is faster, some free proxies like the ones from [proxifly's github](https://github.com/proxifly/free-proxy-list) **may** work.
+- **Slow proxies is a TERRIBLE bad idea.** Proxyless is faster than proxied with slow proxies, some free proxies like the ones from [proxifly's github](https://github.com/proxifly/free-proxy-list) **may** work.
 - **Rate-limits are automatically handled** by switching to proxies for a short cooldown.
 - **Yes, the code is messy.** It's functional, but a rewrite is planned for V2.
 
@@ -224,6 +224,7 @@ Open an issue on [GitHub](https://github.com/ytax/snapchat-username-checker/issu
 - Some SOCKS5 proxies may not support HTTP/2 and will be skipped.
 - Running large lists with poor proxies may significantly slow down checks.
 - Concurrency isn't implemented yet.
+- The proxy validator is abysmally, concurrency needs to be implemented here asap.
 
 ---
 

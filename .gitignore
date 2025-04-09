@@ -57,6 +57,7 @@ releases/
 
 # useless shi
 proxies.txt
+targets.txt
 
 
 # Go workspace file

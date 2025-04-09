@@ -1,85 +1,260 @@
+# 👻 Snapchat Username Checker
 
-# Pintrest Username Availability Checker
+A terminal-based Snapchat username availability checker with SOCKS5 proxy support, session saving, a proxyless mode and real-time CPM tracking. 
+It leverages Snapchat's private gRPC API (acquired from the mobile app) to deliver fast, accurate results — **proxyless or proxied**.
+It's a bit ugly but incredibly fast and efficient — V2 rewrite coming soon™.
 
-This is a command-line tool written in Go that allows you to check the availability of pintrest usernames.
-This tool also has a session feature that allows you to save your progress so you dont have to recheck usernames you already checked previously.
+> Written in Go. Reverse engineered straight from the Snapchat mobile app.
 
-## Features
-
-- **Check Pintrest Username availability**: Check if a Github Username is available or already claimed.
-- **Session management**: Create new sessions or resume existing ones.
-- **Progress tracking**: The tool remembers where it left off in case of interruptions.
-- **Proxyless**: This tool does not require you to provide proxies.
-
-## Installation
-
-You can download the latest release of the Pintrest Username Checker from the [releases page](https://github.com/yTax/Pintrest-Username-Checker/releases) on GitHub. Simply go to the page, choose the latest version, and download the zip.
-
-
-## Build Instructions
-
-1. Clone the repository:
-
-   ```bash
-   git clone https://github.com/yTax/Pintrest-Username-Checker.git
-   ```
-
-2. Navigate to the project folder:
-
-   ```bash
-   cd pintrest-username-checker
-   ```
-
-3. Build the project:
-
-   ```bash
-   go build
-   ```
-
-4. Run the program:
-
-   ```bash
-   ./main.exe
-   ```
-
-## Usage
-
-When you run the tool, you'll be greeted with a menu to select your desired action. You can:
-
-1. **Start a New Session**: Create a new session and begin checking usernames from a `targets.txt` file.
-2. **Resume an Existing Session**: Choose an existing session to continue checking usernames.
-3. **Exit**: Exit the program.
-
-The program will check each username from your `targets.txt` file. If an username is available, it will be saved to the `output.txt` file. The program will also track your progress, so you can stop and resume at any time.
-
-### Example Session Workflow
-
-1. **Start a New Session**:
-   - If no session exists, the tool will create a new session automatically and read from the `targets.txt` file.
-   - By default, this file contains some random semi-og usernames, you can replace the content of this file with whatever you want the software to check.
-   - I also HEAVILY recommend you to run your list through a randomizer so that you arent checking the targets in alphabetic order.
-2. **Resume a Session**:
-   - If sessions exist, you can select one to resume from where you left off.
-   - You will be shown the available sessions, and you can write it's name to select it.
-
-## Known Issues
-
-- The tool may take time depending on the number of usernames being checked. This is due to the fact that the size of the request is quite big, a possible way to fix this would be implementing some form of concurrency.
-- If you delete the targets.txt file the tool will stop working because it wont be able to read the targets.
-
-## To-do List
-
-- [ ] Add an option to generate targets (3c, 3l, 4c and 4l usernames).
-- [ ] Add discord webhook support.
-- [ ] Add some comments because i was too lazy to do it. I think the code is very easy to understand though.
-- [ ] Add concurrency as this is probably the only checker that i've made so far which would greatly benefit from it.
-
-## Credits
-
-This tool was created by [ytax](https://github.com/ytax).
-
-Feel free to contribute or open issues if you encounter any bugs or have suggestions for new features.
+**Created by [ytax](https://github.com/ytax)**
 
 ---
 
-Enjoy checking your usernames and have fun!
+## 📚 Table of Contents
+
+### ⚙️ Core
+- [Features](#features)
+- [Usage](#usage)
+- [File Formats](#file-formats)
+- [Build Instructions](#build-instruction)
+
+### 🔍 Under the Hood
+- [How It Works](#how-it-works-and-how-it-was-built)
+- [Warnings](#warnings)
+- [Proto & gRPC](#proto--grpc)
+
+### 📌 Help & Info
+- [FAQ](#faq)
+- [What Makes a Valid Username?](#what-makes-a-valid-username)
+- [Support](#support)
+- [Known Issues / Limitations](#known-issues--limitations)
+
+### 💻 Dev & Roadmap
+- [Developer Notes](#developer-notes)
+- [Roadmap (V2 Preview)](#roadmap-v2-preview)
+- [Contributing](#contributing)
+- [Disclaimer](#disclaimer)
+
+### 📸 Extras
+- [Screenshots](#screenshots)
+
+
+---
+
+## ⚙️ Features
+
+- 🔍 Fastest Snapchat checker you'll find (gRPC based)
+- ⚡ Average of **260 checks per minute**
+- 🔌 Proxyless execution support
+- 🧠 Built-in username filtering for invalid formats
+- 🌐 SOCKS5 Proxy support (recommended for ratelimit bypass)
+- 💾 Auto session saving — resume your checks anytime
+- 📈 CPM (Checks Per Minute) calculation
+- 🔁 **Smart proxy switching** — proxyless > proxied > proxyless for speed
+- 📄 Thoroughly documented and commented code. Feel free to use this endpoint or fork this repo!
+
+---
+
+## 🚀 Usage
+
+You can download the latest release of the Snapchat Username Checker from the [releases page](https://github.com/yTax/snapchat-username-checker/releases) on GitHub. Simply go to the page, choose the latest version, and download the zip.
+
+After opening you'll be prompted with:
+
+- New Session or Resume Session
+- Use proxies or go proxyless after choosing whether to start a new session or resume an existing one
+- Select your target usernames file (via GUI dialog)
+- (If using proxies) select your proxy list (SOCKS5 only and make sure they are fast)
+- If you want to validate your proxies (you should always do this)
+
+### ✍️ File formats
+
+#### `targets.txt` (input)
+```
+username1
+username2
+...
+```
+
+#### `sessions/SESSION_X/targets.txt` (Saved Sessions)
+
+```
+Progress: 2
+username1
+username2
+...
+```
+
+> `Progress` line helps resume exactly where you left off.
+
+#### `proxies.txt` (optional, SOCKS5 only due to Snapchat's API only working with gRPC and HTTP2)
+```
+127.0.0.1:1080
+88.198.24.108:1080
+...
+```
+
+---
+
+## 📦 Build Instruction
+
+> Requires **Go 1.20+** and `protoc` to regenerate gRPC modules (optional).
+
+### 1. Clone the repo
+
+```bash
+git clone https://github.com/ytax/snapchat-username-checker.git
+cd snapchat-username-checker
+```
+
+### 2. Install dependencies
+
+```bash
+go mod tidy
+```
+
+### 3. Compile
+
+```bash
+go build
+```
+
+### 4.1 (Optional) Compile your own proto file
+```bash
+# installs the go modules for protoc and protobuf in case you dont have them
+go install google.golang.org/protobuf/cmd/protoc-gen-go@latest 
+go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
+```
+
+### 4.2 (Optional) Build your Go module with the proto file
+```bash
+# this command will create modules/requestparser/suggest_username.pb.go
+protoc suggest_username.proto --go_out=.
+```
+
+---
+
+## 🧠 How it works and How it was built
+
+This tool was built by reverse-engineering Snapchat's mobile API. After bypassing the app’s SSL pinning, traffic was intercepted via a debug proxy, allowing access to all the internal gRPC endpoints.
+
+Alongside the endpoint discovery, the tool includes a fairly precise recreation of Snapchat’s .proto files — ensuring that request and response structures are fully compatible with Snapchat's gRPC backend. This makes every check accurate and native, just like the app itself.
+
+It specifically uses: `https://aws.api.snapchat.com/snapchat.activation.api.SuggestUsernameService/SuggestUsername`
+
+This is the same endpoint the Snapchat app uses to suggest alternative usernames during signup. The logic is simple and reliable:
+
+> If the **first suggestion returned matches the username you entered**, the username is **available**.
+
+### ✅ Why This Matters
+
+- **No headless browsers**  
+- **No terrible web endpoints that yield inaccurate results**  
+- **Incredibly fast and efficient**
+
+Just raw, direct gRPC requests to Snapchat’s infrastructure — resulting in **fast**, **accurate**, and **efficient** username checks.
+
+
+---
+
+## ⚠️ Warnings
+
+- **Your proxies MUST be SOCKS5**, in `IP:PORT` format. No `socks5://` prefix. This is due to SOCKS5 being the only proxies that can communicate in HTTP2 with gRPC.
+- **Slow proxies is a TERRIBLE bad idea.** Proxyless is faster, some free proxies like the ones from [proxifly's github](https://github.com/proxifly/free-proxy-list) **may** work.
+- **Rate-limits are automatically handled** by switching to proxies for a short cooldown.
+- **Yes, the code is messy.** It's functional, but a rewrite is planned for V2.
+
+---
+
+## 🛠 Proto & gRPC
+
+Again, if you want to regen your own gRPC or Go module:
+
+```bash
+protoc suggest_username.proto --go_out=. --go-grpc_out=.
+```
+
+Output module will be in `./modules/requestparser`.
+
+---
+
+## ❓ FAQ
+
+**Q: Why is this checker so fast and what makes it different?**  
+A: It talks directly to Snapchat's internal gRPC endpoint used by the mobile app. This results in faster responses and less overall ratelimits.
+
+**Q: Can I use HTTP proxies?**  
+A: No. Only SOCKS5. HTTP proxies won't work with HTTP/2 & gRPC.
+
+**Q: It’s not checking properly, what’s wrong?**  
+A: Check your proxies. Or just run proxyless. Most issues come from slow/dead proxies.
+
+**Q: I'm using proxies, but it looks like some checks are still proxyless. Why?**
+A: This is intentional. Proxyless requests are significantly faster because they avoid the overhead of routing through a proxy.
+
+When you allow the tool to use proxies, the checker starts by sending requests **without a proxy** to maximize speed. When it hits a rate limit, it automatically switches to **proxy mode**, using your SOCKS5 proxies to continue checking. Once the rate limit on the proxyless connection expires, it switches back to proxyless mode to take advantage of it's speed.
+
+If a proxy is rate-limited or fails, the tool rotates to the next one in your list.
+
+This smart switching system ensures the checks are as fast as possible, that it works great even with average-speed proxies and an efficient use of your proxies and their bandwidth.
+
+---
+
+## 🔍 What Makes a Valid Username?
+
+Snapchat requires usernames that:
+- Are 3–15 characters long
+- Start with a letter
+- Contain only letters, numbers, dots, dashes or underscores
+- Do **not** end with a symbol
+- Do **not** contain multiple symbols in a row
+
+> This tool filters invalid usernames before even sending a request — saving time, proxies and ratelimits.
+
+---
+
+## 👾 Support
+
+Open an issue on [GitHub](https://github.com/ytax/snapchat-username-checker/issues).
+
+---
+
+## 🧪 Known Issues / Limitations
+
+- Some SOCKS5 proxies may not support HTTP/2 and will be skipped.
+- Running large lists with poor proxies may significantly slow down checks.
+- Concurrency isn't implemented yet.
+
+---
+
+## 🧱 Developer Notes
+
+- The `suggest_username.proto` file was reverse engineered from the mobile app and defines the full request/response schema for the SuggestUsername gRPC call.
+- You can replace this proto file with others if you reverse additional endpoints.
+- The tool currently sends an empty locale (`""`) in gRPC requests. This matches Snapchat’s current default behavior but this could be a problem in the future.
+
+---
+
+## 🔮 Roadmap (V2 Preview)
+
+- [ ] Cleaner, modular codebase
+- [ ] Parallel checking with goroutines or some other form of concurrency
+- [ ] Optional web GUI
+- [ ] Cleaner UI and better user experience
+
+---
+
+## 🤝 Contributing
+
+Pull requests are welcome! Feel free to fork the project and submit improvements, bug fixes, or feature ideas.
+
+---
+
+## ⚖️ Disclaimer
+
+This tool is intended for research purposes only.  
+Use responsibly.
+
+---
+
+## 🖼️ Screenshots

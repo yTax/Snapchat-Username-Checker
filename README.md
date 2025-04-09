@@ -13,7 +13,7 @@ It's a bit ugly but incredibly fast and efficient — V2 rewrite coming soon™.
 ## 📚 Table of Contents
 
 ### ⚙️ Core
-- [Features](#features)
+- [Features](#-features)
 - [Usage](#usage)
 - [File Formats](#file-formats)
 - [Build Instructions](#build-instruction)

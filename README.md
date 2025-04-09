@@ -10,37 +10,6 @@ It's a bit ugly but incredibly fast and efficient — V2 rewrite coming soon™.
 
 ---
 
-## 📚 Table of Contents
-
-### ⚙️ Core
-- [Features](#-features)
-- [Usage](#usage)
-- [File Formats](#file-formats)
-- [Build Instructions](#build-instruction)
-
-### 🔍 Under the Hood
-- [How It Works](#how-it-works-and-how-it-was-built)
-- [Warnings](#warnings)
-- [Proto & gRPC](#proto--grpc)
-
-### 📌 Help & Info
-- [FAQ](#faq)
-- [What Makes a Valid Username?](#what-makes-a-valid-username)
-- [Support](#support)
-- [Known Issues / Limitations](#known-issues--limitations)
-
-### 💻 Dev & Roadmap
-- [Developer Notes](#developer-notes)
-- [Roadmap (V2 Preview)](#roadmap-v2-preview)
-- [Contributing](#contributing)
-- [Disclaimer](#disclaimer)
-
-### 📸 Extras
-- [Screenshots](#screenshots)
-
-
----
-
 ## ⚙️ Features
 
 - 🔍 **Fastest** Snapchat checker you'll find (gRPC based)

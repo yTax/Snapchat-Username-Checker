@@ -194,6 +194,7 @@ Open an issue on [GitHub](https://github.com/ytax/snapchat-username-checker/issu
 
 ## 🧪 Known Issues / Limitations
 
+- Sometimes snapchat's own API will have outdated results when it comes to checking. This can sometimes cause the checker to give false-positives especially with accounts that were shadowbanned.
 - Some SOCKS5 proxies may not support HTTP/2 and will be skipped.
 - Running large lists with poor proxies may significantly slow down checks.
 - Concurrency isn't implemented yet.

@@ -2,42 +2,12 @@
 
 A terminal-based Snapchat username availability checker with SOCKS5 proxy support, session saving, a proxyless mode and real-time CPM tracking. 
 It leverages Snapchat's private gRPC API (acquired from the mobile app) to deliver fast, accurate results — **proxyless or proxied**.
+
 It's a bit ugly but incredibly fast and efficient — V2 rewrite coming soon™.
 
 > Written in Go. Reverse engineered straight from the Snapchat mobile app.
 
 **Created by [ytax](https://github.com/ytax)**
-
----
-
-## 📚 Table of Contents
-
-### ⚙️ Core
-- [Features](#-features)
-- [Usage](#usage)
-- [File Formats](#file-formats)
-- [Build Instructions](#build-instruction)
-
-### 🔍 Under the Hood
-- [How It Works](#how-it-works-and-how-it-was-built)
-- [Warnings](#warnings)
-- [Proto & gRPC](#proto--grpc)
-
-### 📌 Help & Info
-- [FAQ](#faq)
-- [What Makes a Valid Username?](#what-makes-a-valid-username)
-- [Support](#support)
-- [Known Issues / Limitations](#known-issues--limitations)
-
-### 💻 Dev & Roadmap
-- [Developer Notes](#developer-notes)
-- [Roadmap (V2 Preview)](#roadmap-v2-preview)
-- [Contributing](#contributing)
-- [Disclaimer](#disclaimer)
-
-### 📸 Extras
-- [Screenshots](#screenshots)
-
 
 ---
 
@@ -160,7 +130,7 @@ Just raw, direct gRPC requests to Snapchat’s infrastructure — resulting in *
 ## ⚠️ Warnings
 
 - **Your proxies MUST be SOCKS5**, in `IP:PORT` format. No `socks5://` prefix. This is due to SOCKS5 being the only proxies that can communicate in HTTP2 with gRPC.
-- **Slow proxies is a TERRIBLE bad idea.** Proxyless is faster than proxied with slow proxies, some free proxies like the ones from [proxifly's github](https://github.com/proxifly/free-proxy-list) **may** work.
+- **Slow proxies is a TERRIBLE bad idea.** Proxyless is faster than proxied with slow proxies, some free proxies like the ones from [proxifly's github](https://github.com/proxifly/free-proxy-list) **may** work but i'd recommend you use the free trial proxies from [Webshare](https://www.webshare.io/) if you want to run this for free, they're fast enough to not cause any problems or major slow-downs.
 - **Rate-limits are automatically handled** by switching to proxies for a short cooldown.
 - **Yes, the code is messy.** It's functional, but a rewrite is planned for V2.
 
@@ -188,6 +158,9 @@ A: No. Only SOCKS5. HTTP proxies won't work with HTTP/2 & gRPC.
 
 **Q: It’s not checking properly, what’s wrong?**  
 A: Check your proxies. Or just run proxyless. Most issues come from slow/dead proxies.
+
+**Q: Can i use free proxies?**  
+A: They most likely wont work because of how slow they are and possibly not handling encrypted connections. If you want to run this tool for free sign up for the [Webshare](https://www.webshare.io/) free trial and claim the 10 free proxies they give you. The proxies arent incredible, but they're fast enough to not cause problems or slow-down the tool.
 
 **Q: I'm using proxies, but it looks like some checks are still proxyless. Why?**
 A: This is intentional. Proxyless requests are significantly faster because they avoid the overhead of routing through a proxy.
@@ -221,11 +194,13 @@ Open an issue on [GitHub](https://github.com/ytax/snapchat-username-checker/issu
 
 ## 🧪 Known Issues / Limitations
 
+- Sometimes snapchat's own API will have outdated results when it comes to checking. This can sometimes cause the checker to give false-positives especially with accounts that were shadowbanned.
 - Some SOCKS5 proxies may not support HTTP/2 and will be skipped.
 - Running large lists with poor proxies may significantly slow down checks.
 - Concurrency isn't implemented yet.
 - The proxy validator is **abysmally** slow, concurrency needs to be implemented here asap.
-- The program sometimes will enter an infinite loop or really long loop if all of your proxies suddenly die. 
+- The program sometimes will enter an infinite loop or really long loop if all of your proxies suddenly die.
+- The checking speed drops by quite a bit and the ratelimits increase after a large amount of requests that return taken usernames. A possible fix for this would be to send a request for an avaliable username in order to prevent the API from ratelimitting the user.
 
 ---
 

@@ -15,6 +15,9 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"runtime"
+	"syscall"
+	"unsafe"
 
 	"github.com/sqweek/dialog"
 
@@ -25,6 +28,37 @@ import (
 	"golang.org/x/net/proxy"
 	"google.golang.org/protobuf/proto"
 )
+
+func init() {
+	if runtime.GOOS == "windows" {
+		enableANSIColors() // fix ansi colors not working on Windows 10
+	}
+}
+
+func enableANSIColors() {
+	kernel32 := syscall.NewLazyDLL("kernel32.dll")
+	setConsoleMode := kernel32.NewProc("SetConsoleMode")
+	getConsoleMode := kernel32.NewProc("GetConsoleMode")
+
+	var mode uint32
+	handle := os.Stdout.Fd()
+
+	ret, _, err := getConsoleMode.Call(uintptr(handle), uintptr(unsafe.Pointer(&mode)))
+	if ret == 0 {
+		fmt.Fprintf(os.Stderr, "Failed to get console mode: %v\n", err)
+		return
+	}
+
+	const ENABLE_VIRTUAL_TERMINAL_PROCESSING = 0x0004
+	mode |= ENABLE_VIRTUAL_TERMINAL_PROCESSING
+
+	ret, _, err = setConsoleMode.Call(uintptr(handle), uintptr(mode))
+	if ret == 0 {
+		fmt.Fprintf(os.Stderr, "Failed to set console mode: %v\n", err)
+	}
+}
+
+
 
 
 var proxyToggle int // this var handles the switching between the proxy-less and the proxied requests; 

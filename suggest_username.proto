@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-// this .proto was reverse-engineered from a  
+// this .proto was reverse-engineered from a request
 
 package requestparser;
 option go_package = "modules/requestparser";

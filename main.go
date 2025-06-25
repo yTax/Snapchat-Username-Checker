@@ -447,6 +447,13 @@ func checkID(config RequestConfig) int {
 			
 			return 2
 		}
+
+		// for some reason now snapchat sends u back an empty array sometimes when u get ratelimited?
+		if len(suggestions) == 0 {
+			return 2
+		}
+
+
 		if suggestions[0] == id {
 			return 1
 		}
@@ -460,6 +467,12 @@ func checkID(config RequestConfig) int {
 		
 		return 2
 	}
+
+	// for some reason now snapchat sends u back an empty array sometimes when u get ratelimited?
+	if len(suggestions) == 0 {
+		return 2
+	}
+
 	if suggestions[0] == id {
 		return 1
 	}
